@@ -32,10 +32,10 @@ def lambda_handler(event, context):
         unique_id = uuid.uuid4()
         item = marshall(
             {
-                "PK_Number": str(number),
+                "PK_Id": str(unique_id),
+                "SK_Number": str(number),
                 "Name": name,
                 "Email": email,
-                "Validate_Number_Code": str(unique_id),
                 "Status": "Pending",
             }
         )
