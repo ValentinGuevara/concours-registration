@@ -4,7 +4,7 @@ import uuid
 
 print("Loading function")
 dynamo = boto3.client("dynamodb")
-
+sns = boto3.client("sns")
 
 def marshall(data):
     boto3.resource("dynamodb")
@@ -46,6 +46,10 @@ def lambda_handler(event, context):
                 ConditionExpression="PK_Number <> :number",
                 ExpressionAttributeValues={":number": {"S": str(number)}},
             )
+            # https://github.com/RekhuGopal/PythonHacks/blob/main/AWS_SNS_Text_Messages_Lambda/publishnotification.py
+            message = "The file is uploaded at S3 bucket path {}".format(from_path)
+            subject = "Processes completion Notification"
+            sns.publish(TopicArn=topic_arn, Message=message, Subject=subject)
             return respond(None, res)
         except Exception as e:
             return respond("REGISTER_ONCE")
