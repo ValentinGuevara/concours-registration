@@ -40,7 +40,7 @@ def lambda_handler(event, context):
             }
         )
         try:
-            print(item)
+            #TODO: Uniqueness
             res = dynamo.put_item(
                 TableName="concours",
                 Item=item,
