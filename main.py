@@ -1,9 +1,9 @@
 import boto3
 import json
 import uuid
+import os
 
-print("Loading function")
-dynamo = boto3.client("dynamodb")
+dynamo = boto3.resource('dynamodb')
 sqs = boto3.client("sqs")
 
 def marshall(data):
@@ -14,44 +14,58 @@ def marshall(data):
 
 def respond(err, res=None):
     return {
+        "isBase64Encoded": False,
         "statusCode": "400" if err else "200",
-        "body": err if err else json.dumps(res),
         "headers": {
             "Content-Type": "application/json",
         },
+        "body": json.dumps({"reason": err}) if err else json.dumps(res),
     }
 
 
 def lambda_handler(event, context):
     print("Received event: " + json.dumps(event, indent=2))
 
-    operation = event["requestContext"]["http"]["method"]
+    operation = event["httpMethod"]
     if operation == "POST":
         params = json.loads(event["body"])
-        number, name, email = params.values()
-        unique_id = uuid.uuid4()
-        item = marshall(
-            {
-                "PK_Number": str(number),
-                "SK_Id": str(unique_id),
-                "Name": name,
-                "Email": email,
-                "Status": "Pending",
+        number = str(params['number'])
+        name = params['name']
+        email = params['email']
+
+        concours_table = dynamo.Table('concours')
+        response = concours_table.get_item(
+            Key={
+                "PK_Number": number
             }
         )
+        existing_item = response.get('Item', None)
+
+        if existing_item and os.environ["GAME_ON"] and os.environ["GAME_ON"] == "true":
+            return respond("GAME_PLAY_ONCE")
+
+        code = str(uuid.uuid4())[:6].lower()
+        # item = marshall(
+            
+        # )
         try:
-            #TODO: Uniqueness
-            res = dynamo.put_item(
-                TableName="concours",
-                Item=item,
-                ConditionExpression="attribute_not_exists(PK_Number)",
+            res = concours_table.put_item(
+                Item={
+                    "PK_Number": number,
+                    "Name": name,
+                    "Email": email,
+                    "Code": code,
+                    "Nb_Session": 5 if not existing_item else existing_item['Nb_Session'] + 1,
+                    "Status": "Pending",
+                }
             )
 
             message_resp = sqs.send_message(
                 QueueUrl="https://sqs.eu-central-1.amazonaws.com/637423508544/SMS.fifo",
                 MessageBody=json.dumps({
-                    "number": str(number),
-                    "email": email
+                    "number": number,
+                    "email": email,
+                    "code": code
                 }),
                 MessageGroupId="number"
             )

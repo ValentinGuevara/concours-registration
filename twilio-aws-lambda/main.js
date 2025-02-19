@@ -6,14 +6,13 @@ const client = require("twilio")(accountSid, authToken);
 exports.handler = async (event, context) => {
   console.log(event);
   const item = JSON.parse(event.Records[0].body);
-  console.log(item);
 
   try {
-    // const message = await client.messages.create({
-    //   body: body,
-    //   from: process.env.TWILIO_NUMBER,
-    //   to: to,
-    // });
+    await client.messages.create({
+      body: `Saisir le code pour participer au concours: ${item.code}`,
+      from: process.env.TWILIO_NUMBER,
+      to: item.number,
+    });
     return {
       statusCode: 200,
       body: JSON.stringify({}),

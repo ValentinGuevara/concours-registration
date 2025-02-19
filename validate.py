@@ -1,9 +1,7 @@
 import boto3
 import json
-import uuid
 
-print("Loading function")
-dynamo = boto3.client("dynamodb")
+dynamo = boto3.resource('dynamodb')
 table = dynamo.Table('concours')
 
 def lambda_handler(event, context):
@@ -30,8 +28,7 @@ def lambda_handler(event, context):
         
         item = response['Item']
         
-        # Check if the status is "pending"
-        if item.get('status') == 'pending':
+        if item.get('Status') == 'Pending':
             # Update the status to "processed"
             update_response = table.update_item(
                 Key={'id': item_id},
