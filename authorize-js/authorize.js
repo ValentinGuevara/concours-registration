@@ -1,72 +1,66 @@
-export const handler = function(event, context, callback) {
-    console.log('Received event:', JSON.stringify(event, null, 2));
-    
-    // Retrieve request parameters from the Lambda function input:
-    var headers = event.headers;
-    var queryStringParameters = event.queryStringParameters;
-    var pathParameters = event.pathParameters;
-    var stageVariables = event.stageVariables;
-        
-    // Parse the input for the parameter values
-    var tmp = event.methodArn.split(':');
-    var apiGatewayArnTmp = tmp[5].split('/');
-    var awsAccountId = tmp[4];
-    var region = tmp[3];
-    var restApiId = apiGatewayArnTmp[0];
-    var stage = apiGatewayArnTmp[1];
-    var method = apiGatewayArnTmp[2];
-    var resource = '/'; // root resource
-    if (apiGatewayArnTmp[3]) {
-        resource += apiGatewayArnTmp[3];
+import { authenticator } from "otplib";
+import axios from "axios";
+
+export const handler = async (event, context, callback) => {
+  console.log("Received event:", JSON.stringify(event, null, 2));
+
+  if (!event["authorizationToken"]) {
+    return callback("Unauthorized");
+  }
+
+  const totpCode = event["authorizationToken"];
+
+  let base32secret = "";
+  try {
+    const response = await axios.get(
+      "http://localhost:2773/systemsmanager/parameters/get?name=secret_key_concours&withDecryption=true",
+      {
+        headers: {
+          "X-Aws-Parameters-Secrets-Token": process.env["AWS_SESSION_TOKEN"],
+        },
+      }
+    );
+    base32secret = response.data.Parameter.Value;
+  } catch (error) {
+    console.log(error);
+    return callback("Unauthorized");
+  }
+
+  try {
+    const isValid = authenticator.verify({
+      token: totpCode,
+      secret: base32secret,
+    });
+    if (!isValid) {
+      return callback("Unauthorized");
     }
-        
-    // Perform authorization to return the Allow policy for correct parameters and 
-    // the 'Unauthorized' error, otherwise.
 
-    // Perform check otp
+    return callback(null, generateAllow("me", event.methodArn));
+  } catch (err) {
+    console.error(err);
+    return callback("Unauthorized");
+  }
+};
 
-    //if fail = callback("Unauthorized");
-    //if success = callback(null, generateAllow('me', event.methodArn));
-
-     
-    if (headers.HeaderAuth1 === "headerValue1"
-        && queryStringParameters.QueryString1 === "queryValue1"
-        && stageVariables.StageVar1 === "stageValue1") {
-        callback(null, generateAllow('me', event.methodArn));
-    }  else {
-        callback("Unauthorized");
-    }
-}
-     
 // Help function to generate an IAM policy
-var generatePolicy = function(principalId, effect, resource) {
-    // Required output:
-    var authResponse = {};
-    authResponse.principalId = principalId;
-    if (effect && resource) {
-        var policyDocument = {};
-        policyDocument.Version = '2012-10-17'; // default version
-        policyDocument.Statement = [];
-        var statementOne = {};
-        statementOne.Action = 'execute-api:Invoke'; // default action
-        statementOne.Effect = effect;
-        statementOne.Resource = resource;
-        policyDocument.Statement[0] = statementOne;
-        authResponse.policyDocument = policyDocument;
-    }
-    // Optional output with custom properties of the String, Number or Boolean type.
-    authResponse.context = {
-        "stringKey": "stringval",
-        "numberKey": 123,
-        "booleanKey": true
-    };
-    return authResponse;
-}
-     
-var generateAllow = function(principalId, resource) {
-    return generatePolicy(principalId, 'Allow', resource);
-}
-     
-var generateDeny = function(principalId, resource) {
-    return generatePolicy(principalId, 'Deny', resource);
-}
+let generatePolicy = function (principalId, effect, resource) {
+  // Required output:
+  let authResponse = {};
+  authResponse.principalId = principalId;
+  if (effect && resource) {
+    let policyDocument = {};
+    policyDocument.Version = "2012-10-17"; // default version
+    policyDocument.Statement = [];
+    let statementOne = {};
+    statementOne.Action = "execute-api:Invoke"; // default action
+    statementOne.Effect = effect;
+    statementOne.Resource = resource;
+    policyDocument.Statement[0] = statementOne;
+    authResponse.policyDocument = policyDocument;
+  }
+  return authResponse;
+};
+
+let generateAllow = function (principalId, resource) {
+  return generatePolicy(principalId, "Allow", resource);
+};

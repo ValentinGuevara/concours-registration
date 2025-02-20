@@ -2,54 +2,53 @@ import boto3
 import json
 
 dynamo = boto3.resource('dynamodb')
-table = dynamo.Table('concours')
+concours_table = dynamo.Table('concours')
 
 def lambda_handler(event, context):
-    # Extract the id from the event
-    item_id = event["pathParameters"]["id"]
+    print("Received event: " + json.dumps(event, indent=2))
+
+    number = event["queryStringParameters"]["number"]
+    code = event["queryStringParameters"]["code"]
     
-    # Make sure we got the id in the event
-    if not item_id:
+    if not number or not code:
         return {
             'statusCode': 400,
-            'body': json.dumps('Error: Missing item id')
+            'body': json.dumps('Error: Missing params')
         }
     
+    number = str(number).replace('+','').replace(' ','')
     try:
-        # Get the item from DynamoDB by id
-        response = table.get_item(Key={'id': item_id})
+        response = concours_table.get_item(Key={'PK_Number': number})
         
-        # Check if the item exists
         if 'Item' not in response:
             return {
                 'statusCode': 404,
-                'body': json.dumps(f"Item with id {item_id} not found")
+                'body': json.dumps(f"Item with number {number} not found")
             }
         
-        item = response['Item']
+        existing_item = response['Item']
         
-        if item.get('Status') == 'Pending':
-            # Update the status to "processed"
-            update_response = table.update_item(
-                Key={'id': item_id},
-                UpdateExpression="set #status = :status",
-                ExpressionAttributeNames={'#status': 'status'},
-                ExpressionAttributeValues={':status': 'processed'},
+        if existing_item.get('Status') == 'Pending' and existing_item.get('Code') == code:
+            concours_table.update_item(
+                Key={'PK_Number': number},
+                UpdateExpression="SET #status = :status REMOVE Code",
+                ExpressionAttributeNames={'#status': 'Status'},
+                ExpressionAttributeValues={':status': 'Validated'},
                 ReturnValues="UPDATED_NEW"
             )
             
             return {
                 'statusCode': 200,
-                'body': json.dumps(f"Item updated: {update_response['Attributes']}")
+                'body': json.dumps({"status": "ok"})
             }
         else:
             return {
                 'statusCode': 200,
-                'body': json.dumps(f"Item status is not 'pending'. Current status: {item.get('status')}")
+                'body': json.dumps(f"Number already validated or code incorrect")
             }
     
-    except ClientError as e:
+    except:
         return {
             'statusCode': 500,
-            'body': json.dumps(f"Error updating item: {e.response['Error']['Message']}")
+            'body': json.dumps(f"Server error")
         }

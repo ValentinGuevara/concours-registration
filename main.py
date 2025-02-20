@@ -29,7 +29,7 @@ def lambda_handler(event, context):
     operation = event["httpMethod"]
     if operation == "POST":
         params = json.loads(event["body"])
-        number = str(params['number'])
+        number = str(params['number']).replace('+','').replace(' ','')
         name = params['name']
         email = params['email']
 
@@ -45,9 +45,6 @@ def lambda_handler(event, context):
             return respond("GAME_PLAY_ONCE")
 
         code = str(uuid.uuid4())[:6].lower()
-        # item = marshall(
-            
-        # )
         try:
             res = concours_table.put_item(
                 Item={
@@ -63,7 +60,7 @@ def lambda_handler(event, context):
             message_resp = sqs.send_message(
                 QueueUrl="https://sqs.eu-central-1.amazonaws.com/637423508544/SMS.fifo",
                 MessageBody=json.dumps({
-                    "number": number,
+                    "number": '+' + number,
                     "email": email,
                     "code": code
                 }),

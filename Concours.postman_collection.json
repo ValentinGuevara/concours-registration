@@ -1,0 +1,117 @@
+{
+	"info": {
+		"_postman_id": "2f86ba3c-79b6-4624-a3ad-a80c0ef96d0b",
+		"name": "Concours",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Register",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "x-api-key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "995487",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"number\": \"\",\r\n    \"name\": \"Valentin\",\r\n    \"email\": \"\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://.execute-api.eu-central-1.amazonaws.com/concours/register",
+					"protocol": "https",
+					"host": [
+						"",
+						"execute-api",
+						"eu-central-1",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"concours",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Validate",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "x-api-key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "952419",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "https://.execute-api.eu-central-1.amazonaws.com/concours/validate?number=&code=00954f",
+					"protocol": "https",
+					"host": [
+						"",
+						"execute-api",
+						"eu-central-1",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"concours",
+						"validate"
+					],
+					"query": [
+						{
+							"key": "number",
+							"value": ""
+						},
+						{
+							"key": "code",
+							"value": "00954f"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
