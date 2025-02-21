@@ -18,6 +18,8 @@ def respond(err, res=None):
         "statusCode": "400" if err else "200",
         "headers": {
             "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": "true",
         },
         "body": json.dumps({"reason": err}) if err else json.dumps(res),
     }
