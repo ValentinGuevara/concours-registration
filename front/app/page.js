@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, Suspense } from "react";
 import Image from "next/image";
 import Form from "next/form";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { registerParticipant, sendValidateCode } from "@/app/actions/register";
 
 export default function Home() {
-  const searchParams = useSearchParams();
+  const searchParams = useParams();
   const [number, setNumber] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState(searchParams.get("code") || "");
+  const [code, setCode] = useState(searchParams?.code || "");
   const [codeSMS, setCodeSMS] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
