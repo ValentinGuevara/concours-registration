@@ -2,6 +2,8 @@
 
 export async function registerParticipant(participant) {
   console.log(participant);
+  console.log(process.env["URL_API"]);
+  console.log(process.env["API_KEY"]);
   try {
     const response = await fetch(
       `${process.env["URL_API"]}/concours/register`,
@@ -27,7 +29,7 @@ export async function registerParticipant(participant) {
       if (result.reason === "GAME_PLAY_ONCE") {
         return { error: "Tu as déjà participé" };
       } else {
-        return { error: result.reason };
+        return { error: result };
       }
     }
     return result;
