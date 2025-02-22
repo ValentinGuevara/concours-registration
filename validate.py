@@ -43,8 +43,8 @@ def lambda_handler(event, context):
             }
         else:
             return {
-                'statusCode': 200,
-                'body': json.dumps(f"Number already validated or code incorrect")
+                'statusCode': 400,
+                'body': json.dumps(f"ALREADY_VALIDATED_OR_WRONG_CODE")
             }
     
     except:
